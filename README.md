@@ -5,7 +5,10 @@ It transfers files to be edited from remote server using SSH port forward and tr
 
 # Installation
 Remote-atom can be easily installed using the Atom package manager. On the remote server,
-we need to install [rmate](https://github.com/aurora/rmate), it can be install by running this script
+we need to install [rmate](https://github.com/aurora/rmate).
+It is the same executable for TextMate and Sublime Text. You don't have to install it
+if your Textmate/Sublime Text alternatives are working. If not,
+it can be install by running this script
 
 ```bash
 mkdir -p .local/bin
@@ -18,6 +21,19 @@ export PATH="$HOME/.local/bin:$PATH"
 ```
 to your `.profile`.
 
+# Usage
+You have to first open an ssh connection to the remote server. In addition, you have
+to foward to remote port. It can be done by
+
+```bash
+ssh -R 52698:localhost:52698 user@example.com
+```
+
+If you are logged in on the remote system, you can now just execute
+
+```
+rmate test.txt
+```
 
 ### TODO
 - writing tests
