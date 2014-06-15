@@ -100,10 +100,10 @@ module.exports =
     online: false
 
     activate: (state) ->
-        atom.workspaceView.command "remote-atom:start-server", => @startserver()
-        atom.workspaceView.command "remote-atom:stop-server", => @stopserver()
         if atom.config.get "remote-atom.launch_at_startup"
             @startserver()
+        atom.workspaceView.command "remote-atom:start-server", => @startserver()
+        atom.workspaceView.command "remote-atom:stop-server", => @stopserver()
 
     deactivate: ->
         @stopserver()
