@@ -29,7 +29,10 @@ to foward to remote port. It can be done by
 ssh -R 52698:localhost:52698 user@example.com
 ```
 
-If you are logged in on the remote system, you can now just execute
+Open your Atom application, go to the menu `Packages -> Remote Atom`,
+and click `Start Server`. Or your can launch the server via command palette.
+The server can also be configured to be launched at startup in the preference.
+After running the server, you can now just open the file on your remote system by
 
 ```
 rmate test.txt
@@ -39,7 +42,7 @@ rmate test.txt
 - writing tests
 
 ### Known issues
-Since each window of Atom is a separate instance, the tcp server can only be started
-on the first window. Therefore, file will only be opened in the first window. If
-the first window is closed, the package has to be reactivated by disabling and reenabling
-it.  
+Since each window of Atom is a separate instance, the tcp server can only be running
+on one window. Therefore, file will only be opened in the window with the server running.
+If that window is closed, the server can be restarted by clicking
+`Packages -> Remote Atom -> Start Server`.

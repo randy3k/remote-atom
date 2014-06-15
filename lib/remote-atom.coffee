@@ -94,12 +94,19 @@ class Session
 
 module.exports =
     configDefaults:{
-        Port: 52698
+        port: 52698,
+        launch_at_startup: false
     }
     online: false
 
     activate: (state) ->
-        @startserver()
+        atom.workspaceView.command "remote-atom:start-server", => @startserver()
+        atom.workspaceView.command "remote-atom:stop-server", => @stopserver()
+        if atom.config.get "remote-atom.launch_at_startup"
+            @startserver()
+
+    deactivate: ->
+        @stopserver()
 
     startserver: ->
         @server = net.createServer (socket) ->
@@ -107,7 +114,7 @@ module.exports =
             session = new Session(socket)
             session.send("Atom "+atom.getVersion())
 
-        port = atom.config.get "remote-atom.Port"
+        port = atom.config.get "remote-atom.port"
         @server.on 'listening', (e) =>
             @online = true
             console.log "[ratom] listening on port #{port}"
@@ -117,7 +124,7 @@ module.exports =
             console.log "[ratom] stop server"
         @server.listen port, 'localhost'
 
-    deactivate: ->
+    stopserver: ->
         if @online
             @server.close()
             @online = false
