@@ -1,7 +1,7 @@
 {
   "name": "remote-atom",
   "main": "./lib/remote-atom",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "description": "rmate client for Atom",
   "repository": "https://github.com/randy3k/remote-atom",
   "license": "MIT",
