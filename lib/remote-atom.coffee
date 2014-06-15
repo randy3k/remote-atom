@@ -99,6 +99,7 @@ module.exports =
     activate: (state) ->
         @startserver()
 
+
     startserver: ->
         @server = net.createServer (socket) ->
             console.log "[ratom] received connection from #{socket.remoteAddress}"
@@ -106,11 +107,14 @@ module.exports =
             session.send("Atom "+atom.getVersion())
 
         port = atom.config.get "remote-atom.Port"
-        console.log "[ratom] listening on port #{port}"
-        @server.listen port, 'localhost'
-        @server.on "close", ()->
+        @server.on 'listening', (e) ->
+            console.log "[ratom] listening on port #{port}"
+        @server.on 'error', (e) ->
+            console.log "[ratom] unable to start server"
+        @server.on "close", () ->
             console.log "[ratom] stop server"
+        @server.listen port, 'localhost'
+
 
     deactivate: ->
         @server.close()
-
