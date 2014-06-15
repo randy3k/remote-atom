@@ -15,6 +15,12 @@ can be install by running this script (assume that you have the permission),
 wget --no-check-certificate -O /usr/local/bin/rmate https://raw.github.com/aurora/rmate/master/rmate
 ```
 
+You can also rename the command to `ratom`
+
+```
+mv /usr/local/bin/rmate /usr/local/bin/ratom
+```
+
 # Usage
 
 Open your Atom application, go to the menu `Packages -> Remote Atom`,
@@ -35,6 +41,19 @@ rmate test.txt
 ```
 
 If everything has been setup, your should be able to see the opening file in Atom.
+
+### SSH config
+It could be tedious to type `-R 52698:localhost:52698` everytime you ssh. To make you
+life easier, you can add the following to your `~/.ssh/config` file,
+
+```
+Host example.com
+    RemoteForward 52698 localhost:52698
+    User user
+```
+
+From now on, you only have to do `ssh example.com`.
+
 
 ### TODO
 - writing tests
