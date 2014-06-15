@@ -111,8 +111,12 @@ module.exports =
 
     startserver: ->
         # stop any existing server
-        @stopserver()
-        message.display "Starting server", 2000
+        if @online
+            @stopserver()
+            message.display "Restarting server", 2000
+        else
+            message.display "Starting server", 2000
+            
         @server = net.createServer (socket) ->
             console.log "[ratom] received connection from #{socket.remoteAddress}"
             session = new Session(socket)
