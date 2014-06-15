@@ -96,9 +96,10 @@ module.exports =
     configDefaults:{
         Port: 52698
     }
+    online: false
+
     activate: (state) ->
         @startserver()
-
 
     startserver: ->
         @server = net.createServer (socket) ->
@@ -107,7 +108,8 @@ module.exports =
             session.send("Atom "+atom.getVersion())
 
         port = atom.config.get "remote-atom.Port"
-        @server.on 'listening', (e) ->
+        @server.on 'listening', (e) =>
+            @online = true
             console.log "[ratom] listening on port #{port}"
         @server.on 'error', (e) ->
             console.log "[ratom] unable to start server"
@@ -115,6 +117,7 @@ module.exports =
             console.log "[ratom] stop server"
         @server.listen port, 'localhost'
 
-
     deactivate: ->
-        @server.close()
+        if @online
+            @server.close()
+            @online = false
