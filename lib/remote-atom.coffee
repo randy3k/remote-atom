@@ -7,8 +7,6 @@ randomstring = require './randomstring'
 {Subscriber} = require 'emissary'
 
 
-port = 52698
-
 class Session
     Subscriber.includeInto(this)
     should_parse_data: false
@@ -70,27 +68,23 @@ class Session
 
     handle_connection: (editor) ->
         buffer = editor.getBuffer()
-        @subscribe buffer, 'saved', () => @on_saved()
+        @subscribe buffer, 'saved', () => @save()
         @subscribe buffer, 'destroyed', =>
             @unsubscribe(buffer)
             if @socket?
                 @close()
 
-    on_saved: ->
-        console.log "[ratom] saving #{path.basename @tempfile} to #{@remoteAddress}"
-        @save()
-
     send: (cmd) ->
         @socket.write cmd+"\n"
 
     save: ->
+        console.log "[ratom] saving #{path.basename @tempfile} to #{@remoteAddress}"
         @send "save"
         @send "token:#{@token}"
         data = fs.readFileSync(@tempfile)
         @send "data:" + Buffer.byteLength(data)
         @socket.write data
         @send ""
-
 
     close: ->
         @send "close"
@@ -99,6 +93,9 @@ class Session
 
 
 module.exports =
+    configDefaults:{
+        Port: 52698
+    }
     activate: (state) ->
         @startserver()
 
@@ -108,7 +105,12 @@ module.exports =
             session = new Session(socket)
             session.send("Atom "+atom.getVersion())
 
+        port = atom.config.get "remote-atom.Port"
         console.log "[ratom] listening on port #{port}"
         @server.listen port, 'localhost'
+        @server.on "close", ()->
+            console.log "[ratom] stop server"
 
     deactivate: ->
+        @server.close()
+
