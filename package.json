@@ -2,7 +2,7 @@
   "name": "remote-atom",
   "main": "./lib/remote-atom",
   "version": "1.0.0",
-  "description": "rmate client for Atom",
+  "description": "rmate client for Atom: editing file directly via SSH",
   "repository": "https://github.com/randy3k/remote-atom",
   "license": "MIT",
   "engines": {
