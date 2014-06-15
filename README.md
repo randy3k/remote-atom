@@ -37,3 +37,9 @@ rmate test.txt
 
 ### TODO
 - writing tests
+
+### Known issues
+Since each window of Atom is a separate instance, the tcp server can only be started
+on the first window. Therefore, file will only be opened in the first window. If
+the first window is closed, the package has to be reactivated by disabling and reenabling
+it.  
