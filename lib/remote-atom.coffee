@@ -3,9 +3,9 @@ fs = require 'fs'
 os = require 'os'
 path = require 'path'
 mkdirp = require 'mkdirp'
-randomstring = require './randomstring'
 {Subscriber} = require 'emissary'
-
+randomstring = require './randomstring'
+message = require './status-message'
 
 class Session
     Subscriber.includeInto(this)
@@ -79,6 +79,7 @@ class Session
 
     save: ->
         console.log "[ratom] saving #{path.basename @tempfile} to #{@remoteAddress}"
+        message.display "Saving #{path.basename @tempfile} to #{@remoteAddress}", 2000
         @send "save"
         @send "token:#{@token}"
         data = fs.readFileSync(@tempfile)
@@ -111,6 +112,7 @@ module.exports =
     startserver: ->
         # stop any existing server
         @stopserver()
+        message.display "Starting server", 2000
         @server = net.createServer (socket) ->
             console.log "[ratom] received connection from #{socket.remoteAddress}"
             session = new Session(socket)
@@ -121,12 +123,14 @@ module.exports =
             @online = true
             console.log "[ratom] listening on port #{port}"
         @server.on 'error', (e) ->
+            message.display "Unable to start server", 2000
             console.log "[ratom] unable to start server"
         @server.on "close", () ->
             console.log "[ratom] stop server"
         @server.listen port, 'localhost'
 
     stopserver: ->
+        message.display "Stoping server", 2000
         if @online
             @server.close()
             @online = false
