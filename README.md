@@ -1,6 +1,6 @@
-# ratom
+# remote-atom
 
-It is the rmate for Atom.
+It is the rmate client for Atom.
 
 ### TODO
 - custom port

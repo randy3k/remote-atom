@@ -1,9 +1,9 @@
 {
-  "name": "ratom",
-  "main": "./lib/ratom",
+  "name": "remote-atom",
+  "main": "./lib/remote-atom",
   "version": "0.1.0",
-  "description": "rmate for Atom",
-  "repository": "https://github.com/randy3k/ratom",
+  "description": "rmate client for Atom",
+  "repository": "https://github.com/randy3k/remote-atom",
   "license": "MIT",
   "engines": {
     "atom": ">0.50.0"
