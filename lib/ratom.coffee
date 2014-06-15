@@ -22,8 +22,9 @@ class Session
             chunk = socket.read()
             @parse_chunk(chunk)
 
-    make_tempfile: (token) ->
-        @tempfile = path.join(os.tmpdir(), randomstring(20), @remoteAddress, token)
+    make_tempfile: ()->
+        @tempfile = path.join(os.tmpdir(), randomstring(20), @remoteAddress, @token)
+        console.log "[ratom] create #{@tempfile}"
         dirname = path.dirname(@tempfile)
         mkdirp.sync(dirname)
         @fd = fs.openSync(@tempfile, 'w')
@@ -53,7 +54,8 @@ class Session
                 @settings[m[1]] = m[2]
                 switch m[1]
                     when "token"
-                        @make_tempfile m[2]
+                        @token = m[2]
+                        @make_tempfile()
                     when "data"
                         @datasize = parseInt(m[2],10)
                         @should_parse_data = true
@@ -71,17 +73,28 @@ class Session
         @subscribe buffer, 'saved', () => @on_saved()
         @subscribe buffer, 'destroyed', =>
             @unsubscribe(buffer)
-            @close()
+            if @socket?
+                @close()
 
     on_saved: ->
         console.log "[ratom] saving #{path.basename @tempfile} to #{@remoteAddress}"
+        @save()
 
-    send_command: (cmd) ->
+    send: (cmd) ->
         @socket.write cmd+"\n"
 
+    save: ->
+        @send "save"
+        @send "token:#{@token}"
+        data = fs.readFileSync(@tempfile)
+        @send "data:" + Buffer.byteLength(data)
+        @socket.write data
+        @send ""
+
+
     close: ->
-        @send_command "close"
-        @send_command ""
+        @send "close"
+        @send ""
         @socket.end()
 
 
@@ -93,7 +106,7 @@ module.exports =
         @server = net.createServer (socket) ->
             console.log "[ratom] received connection from #{socket.remoteAddress}"
             session = new Session(socket)
-            session.send_command("Atom "+atom.getVersion())
+            session.send("Atom "+atom.getVersion())
 
         console.log "[ratom] listening on port #{port}"
         @server.listen port, 'localhost'
