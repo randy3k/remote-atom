@@ -81,9 +81,9 @@ class Session
         console.log "[ratom] saving #{path.basename @tempfile} to #{@remoteAddress}"
         message.display "Saving #{path.basename @tempfile} to #{@remoteAddress}", 2000
         @send "save"
-        @send "token:#{@token}"
+        @send "token: #{@token}"
         data = fs.readFileSync(@tempfile)
-        @send "data:" + Buffer.byteLength(data)
+        @send "data: " + Buffer.byteLength(data)
         @socket.write data
         @send ""
 
@@ -116,7 +116,7 @@ module.exports =
             message.display "Restarting server", 2000
         else
             message.display "Starting server", 2000
-            
+
         @server = net.createServer (socket) ->
             console.log "[ratom] received connection from #{socket.remoteAddress}"
             session = new Session(socket)
