@@ -21,7 +21,7 @@ class Session
             @parse_chunk(chunk)
 
     make_tempfile: ()->
-        @tempfile = path.join(os.tmpdir(), randomstring(20), @remoteAddress, @token)
+        @tempfile = path.join(os.tmpdir(), randomstring(10), @token)
         console.log "[ratom] create #{@tempfile}"
         dirname = path.dirname(@tempfile)
         mkdirp.sync(dirname)
