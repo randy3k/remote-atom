@@ -15,13 +15,15 @@ class Session
 
     constructor: (socket) ->
         @socket = socket
-        @remoteAddress = socket.remoteAddress
+        @online = true
         socket.on "readable", =>
             chunk = socket.read()
             @parse_chunk(chunk)
+        socket.on "close", =>
+            @online = false
 
     make_tempfile: ()->
-        @tempfile = path.join(os.tmpdir(), randomstring(10), @token)
+        @tempfile = path.join(os.tmpdir(), randomstring(10), @basename)
         console.log "[ratom] create #{@tempfile}"
         dirname = path.dirname(@tempfile)
         mkdirp.sync(dirname)
@@ -53,10 +55,14 @@ class Session
                 switch m[1]
                     when "token"
                         @token = m[2]
-                        @make_tempfile()
                     when "data"
                         @datasize = parseInt(m[2],10)
                         @should_parse_data = true
+                    when "display-name"
+                        @displayname = m[2]
+                        @remoteAddress = @displayname.split(":")[0]
+                        @basename = @displayname.split(":")[1]
+                        @make_tempfile()
 
 
     open_in_atom: ->
@@ -78,6 +84,10 @@ class Session
         @socket.write cmd+"\n"
 
     save: ->
+        if not @online
+            console.log "[ratom] Error saving #{path.basename @tempfile} to #{@remoteAddress}"
+            message.display "Error saving #{path.basename @tempfile} to #{@remoteAddress}", 2000
+            return
         console.log "[ratom] saving #{path.basename @tempfile} to #{@remoteAddress}"
         message.display "Saving #{path.basename @tempfile} to #{@remoteAddress}", 2000
         @send "save"
@@ -88,6 +98,7 @@ class Session
         @send ""
 
     close: ->
+        @online = false
         @send "close"
         @send ""
         @socket.end()
