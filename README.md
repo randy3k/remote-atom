@@ -12,7 +12,7 @@ install it if your Textmate/Sublime Text alternatives are working. If not, it
 can be install by running this script (assume that you have the permission),
 
 ```bash
-wget --no-check-certificate -O /usr/local/bin/rmate https://raw.github.com/aurora/rmate/master/rmate
+curl -o /usr/local/bin/rmate https://raw.githubusercontent.com/aurora/rmate/master/rmate
 sudo chmod +x /usr/local/bin/rmate
 ```
 
