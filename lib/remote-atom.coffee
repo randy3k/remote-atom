@@ -61,7 +61,7 @@ class Session
                     when "display-name"
                         @displayname = m[2]
                         @remoteAddress = @displayname.split(":")[0]
-                        @basename = @displayname.split(":")[1]
+                        @basename = path.basename(@displayname.split(":")[1])
                         @make_tempfile()
 
 
