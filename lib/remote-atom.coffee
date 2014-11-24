@@ -31,7 +31,7 @@ class Session
 
     parse_chunk: (chunk) ->
         if chunk
-            chunk = chunk.toString("utf8").replace /\s$/, ""
+            chunk = chunk.toString("utf8").replace /\n$/, ""
             lines = chunk.split "\n"
             for line in lines
                     @parse_line(line)
