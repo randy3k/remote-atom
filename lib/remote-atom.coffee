@@ -16,8 +16,7 @@ class Session
     constructor: (socket) ->
         @socket = socket
         @online = true
-        socket.on "readable", =>
-            chunk = socket.read()
+        socket.on "data", (chunk) =>
             @parse_chunk(chunk)
         socket.on "close", =>
             @online = false
@@ -31,23 +30,24 @@ class Session
 
     parse_chunk: (chunk) ->
         if chunk
-            chunk = chunk.toString("utf8").replace /\n$/, ""
+            chunk = chunk.toString("utf8")
+            match = /\n$/.test chunk
+            chunk = chunk.replace /\n$/, ""
             lines = chunk.split "\n"
-            for line in lines
-                    @parse_line(line)
+            for line,i in lines
+                if i < lines.length-1 or match
+                    line = line + "\n"
+                @parse_line(line)
 
     parse_line: (line) ->
         if @should_parse_data
-            if @readbytes == @datasize and line is "."
-                    @should_parse_data = false
-                    fs.closeSync @fd
-                    @open_in_atom()
-            else
-                    @readbytes += Buffer.byteLength(line)
-                    if @readbytes < @datasize
-                            @readbytes += 1
-                            line = line + "\n"
-                    fs.writeSync(@fd, line)
+            if @readbytes >= @datasize and line is ".\n"
+                @should_parse_data = false
+                fs.closeSync @fd
+                @open_in_atom()
+            else if @readbytes < @datasize
+                @readbytes += Buffer.byteLength(line)
+                fs.writeSync(@fd, line)
         else
             m = line.match /([a-z\-]+?)\s*:\s*(.*)/
             if m and m[2]?
