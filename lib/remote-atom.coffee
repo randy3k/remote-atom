@@ -153,7 +153,7 @@ module.exports =
         @server.listen port, 'localhost'
 
     stopserver: ->
-        message.display "Stoping remote atom server", 2000
+        message.display "Stopping remote atom server", 2000
         if @online
             @server.close()
             @online = false
