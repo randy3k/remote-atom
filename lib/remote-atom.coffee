@@ -107,7 +107,8 @@ class Session
 module.exports =
     configDefaults:{
         port: 52698,
-        launch_at_startup: false
+        launch_at_startup: false,
+        keep_alive: false
     }
     online: false
 
@@ -120,13 +121,14 @@ module.exports =
     deactivate: ->
         @stopserver()
 
-    startserver: ->
+    startserver: (quiet = false) ->
         # stop any existing server
         if @online
             @stopserver()
             message.display "Restarting remote atom server", 2000
         else
-            message.display "Starting remote atom server", 2000
+            if not quiet
+                message.display "Starting remote atom server", 2000
 
         @server = net.createServer (socket) ->
             console.log "[ratom] received connection from #{socket.remoteAddress}"
@@ -137,9 +139,15 @@ module.exports =
         @server.on 'listening', (e) =>
             @online = true
             console.log "[ratom] listening on port #{port}"
-        @server.on 'error', (e) ->
-            message.display "Unable to start server", 2000
-            console.log "[ratom] unable to start server"
+        @server.on 'error', (e) =>
+            if not quiet
+                message.display "Unable to start server", 2000
+                console.log "[ratom] unable to start server"
+            if atom.config.get "remote-atom.keep_alive"
+                setTimeout ( =>
+                    @startserver(true)
+                ), 10000
+
         @server.on "close", () ->
             console.log "[ratom] stop server"
         @server.listen port, 'localhost'
