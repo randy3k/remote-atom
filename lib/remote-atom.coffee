@@ -49,7 +49,7 @@ class Session
                 @readbytes += Buffer.byteLength(line)
                 fs.writeSync(@fd, line)
         else
-            m = line.match /([a-z\-]+?)\s*:\s*(.*)/
+            m = line.match /([a-z\-]+?)\s*:\s*(.*?)\s*$/
             if m and m[2]?
                 @settings[m[1]] = m[2]
                 switch m[1]
