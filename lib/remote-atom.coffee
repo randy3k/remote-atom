@@ -115,7 +115,7 @@ module.exports =
         if atom.config.get "remote-atom.launch_at_startup"
             @startserver()
         atom.workspaceView.command "remote-atom:start-server", => @startserver()
-        atom.workspaceView.command "remote-atom:stop-server", => @stopserver()
+        atom.workspaceView.command "remote-atom:stop--server", => @stopserver()
 
     deactivate: ->
         @stopserver()
@@ -124,9 +124,9 @@ module.exports =
         # stop any existing server
         if @online
             @stopserver()
-            message.display "Restarting server", 2000
+            message.display "Restarting remote atom server", 2000
         else
-            message.display "Starting server", 2000
+            message.display "Starting remote atom server", 2000
 
         @server = net.createServer (socket) ->
             console.log "[ratom] received connection from #{socket.remoteAddress}"
@@ -145,7 +145,7 @@ module.exports =
         @server.listen port, 'localhost'
 
     stopserver: ->
-        message.display "Stoping server", 2000
+        message.display "Stoping remote atom server", 2000
         if @online
             @server.close()
             @online = false
