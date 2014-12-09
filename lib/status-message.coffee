@@ -13,20 +13,20 @@ class StatusMessage
     # message - A {String} containing the message to display.
     constructor: (message) ->
         @statusBar = atom.workspaceView.statusBar
-
-        if @statusBar?
-            @panel = @statusBar.appendLeft("<div class=\"inline-block\">#{message}</div>")
-            @node = @panel.element.lastChild
+        @span = document.createElement('span')
+        atom.workspaceView.statusBar?.appendLeft(@span)
+        @setText(message)
 
     # Public: Removes the message from the status bar.
     remove: ->
-        @panel.element.removeChild(@node) if @statusBar?
+        @span.remove()
 
     # Public: Updates the text of the message.
     #
     # text - A {String} containing the new message to display.
     setText: (text) ->
-        @node.innerHTML = text if @statusBar?
+        @span.textContent = text
+
 
 module.exports =
     display: (message, timeout) ->
