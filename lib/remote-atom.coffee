@@ -81,7 +81,8 @@ class Session
                 @close()
 
     send: (cmd) ->
-        @socket.write cmd+"\n"
+        if @online
+            @socket.write cmd+"\n"
 
     save: ->
         if not @online
@@ -98,10 +99,11 @@ class Session
         @send ""
 
     close: ->
-        @online = false
-        @send "close"
-        @send ""
-        @socket.end()
+        if @online
+            @online = false
+            @send "close"
+            @send ""
+            @socket.end()
 
 
 module.exports =
