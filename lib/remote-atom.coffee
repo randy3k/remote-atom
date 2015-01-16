@@ -3,12 +3,10 @@ fs = require 'fs'
 os = require 'os'
 path = require 'path'
 mkdirp = require 'mkdirp'
-{Subscriber} = require 'emissary'
 randomstring = require './randomstring'
 status-message = require './status-message'
 
 class Session
-    Subscriber.includeInto(this)
     should_parse_data: false
     readbytes: 0
     settings: {}
@@ -74,9 +72,8 @@ class Session
 
     handle_connection: (editor) ->
         buffer = editor.getBuffer()
-        @subscribe buffer, 'saved', () => @save()
-        @subscribe buffer, 'destroyed', =>
-            @unsubscribe(buffer)
+        buffer.on 'saved', () => @save()
+        buffer.on 'destroyed', =>
             if @socket?
                 @close()
 
