@@ -5,7 +5,7 @@ path = require 'path'
 mkdirp = require 'mkdirp'
 {Subscriber} = require 'emissary'
 randomstring = require './randomstring'
-message = require './status-message'
+status-message = require './status-message'
 
 class Session
     Subscriber.includeInto(this)
@@ -87,10 +87,10 @@ class Session
     save: ->
         if not @online
             console.log "[ratom] Error saving #{path.basename @tempfile} to #{@remoteAddress}"
-            message.display "Error saving #{path.basename @tempfile} to #{@remoteAddress}", 2000
+            status-message.display "Error saving #{path.basename @tempfile} to #{@remoteAddress}", 2000
             return
         console.log "[ratom] saving #{path.basename @tempfile} to #{@remoteAddress}"
-        message.display "Saving #{path.basename @tempfile} to #{@remoteAddress}", 2000
+        status-message.display "Saving #{path.basename @tempfile} to #{@remoteAddress}", 2000
         @send "save"
         @send "token: #{@token}"
         data = fs.readFileSync(@tempfile)
@@ -117,8 +117,10 @@ module.exports =
     activate: (state) ->
         if atom.config.get "remote-atom.launch_at_startup"
             @startserver()
-        atom.workspaceView.command "remote-atom:start-server", => @startserver()
-        atom.workspaceView.command "remote-atom:stop--server", => @stopserver()
+        atom.commands.add 'atom-workspace',
+            "remote-atom:start-server", => @startserver()
+        atom.commands.add 'atom-workspace',
+            "remote-atom:stop-server", => @stopserver()
 
     deactivate: ->
         @stopserver()
@@ -127,10 +129,10 @@ module.exports =
         # stop any existing server
         if @online
             @stopserver()
-            message.display "Restarting remote atom server", 2000
+            status-message.display "Restarting remote atom server", 2000
         else
             if not quiet
-                message.display "Starting remote atom server", 2000
+                status-message.display "Starting remote atom server", 2000
 
         @server = net.createServer (socket) ->
             console.log "[ratom] received connection from #{socket.remoteAddress}"
@@ -143,7 +145,7 @@ module.exports =
             console.log "[ratom] listening on port #{port}"
         @server.on 'error', (e) =>
             if not quiet
-                message.display "Unable to start server", 2000
+                status-message.display "Unable to start server", 2000
                 console.log "[ratom] unable to start server"
             if atom.config.get "remote-atom.keep_alive"
                 setTimeout ( =>
@@ -155,7 +157,7 @@ module.exports =
         @server.listen port, 'localhost'
 
     stopserver: ->
-        message.display "Stopping remote atom server", 2000
+        status-message.display "Stopping remote atom server", 2000
         if @online
             @server.close()
             @online = false
