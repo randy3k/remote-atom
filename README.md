@@ -7,7 +7,7 @@ port forward and transfers the files back when they are saved.
 # Installation
 Remote Atom can be easily installed using the Atom package manager. On the
 remote server, we need to install [rmate](https://github.com/aurora/rmate) (this one is the bash version). You don't have to install it if you have been using `rmate` with TextMate or Sublime Text.
-It is the same executable for TextMate and Sublime Text. If not, it can be installed by running this script (assume that you have the permission),
+It is the same executable for TextMate and Sublime Text. If not, it (the bash version) can be installed by running this script (assume that you have the permission),
 
 ```bash
 curl -o /usr/local/bin/rmate https://raw.githubusercontent.com/aurora/rmate/master/rmate
@@ -19,6 +19,16 @@ You can also rename the command to `ratom`
 ```
 mv /usr/local/bin/rmate /usr/local/bin/ratom
 ```
+
+If your remote system does not have `bash` (so what else does it have?), there are different versions of `rmate` to choose from:
+
+- The official ruby version: https://github.com/textmate/rmate
+- A bash version: https://github.com/aurora/rmate
+- A perl version: https://github.com/davidolrik/rmate-perl
+- A python version: https://github.com/sclukey/rmate-python
+- A nim version: https://github.com/aurora/rmate-nim
+- A C version: https://github.com/hanklords/rmate.c
+- A node.js version: https://github.com/jrnewell/jmate
 
 # Usage
 
