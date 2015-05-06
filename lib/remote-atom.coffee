@@ -71,11 +71,9 @@ class Session
 
     handle_connection: (editor) ->
         buffer = editor.getBuffer()
-        subscriptions = new CompositeDisposable
-        subscriptions.add buffer.onDidSave(@save)
-        dispose = ->
-            subscriptions.dispose()
-        subscriptions.add buffer.onDidDestroy(dispose)
+        @subscriptions = new CompositeDisposable
+        @subscriptions.add buffer.onDidSave(@save)
+        @subscriptions.add buffer.onDidDestroy(@close)
 
     send: (cmd) ->
         if @online
@@ -95,12 +93,14 @@ class Session
         @socket.write data
         @send ""
 
-    close: ->
+    close: =>
+        console.log "[ratom] closing #{path.basename @tempfile}"
         if @online
             @online = false
             @send "close"
             @send ""
             @socket.end()
+        @subscriptions.dispose()
 
 
 module.exports =
