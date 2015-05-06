@@ -1,3 +1,4 @@
+{CompositeDisposable}  = require 'atom'
 net = require 'net'
 fs = require 'fs'
 os = require 'os'
@@ -62,26 +63,23 @@ class Session
                         @basename = path.basename(@displayname.split(":")[1])
                         @make_tempfile()
 
-
     open_in_atom: ->
         console.log "[ratom] opening #{@tempfile}"
         # register events
         atom.workspace.open(@tempfile).then (editor) =>
             @handle_connection(editor)
 
-
     handle_connection: (editor) ->
         buffer = editor.getBuffer()
-        buffer.on 'saved', () => @save()
-        buffer.on 'destroyed', =>
-            if @socket?
-                @close()
+        @subscriptions = new CompositeDisposable
+        @subscriptions.add buffer.onDidSave(@save)
+        @subscriptions.add buffer.onDidDestroyed(@dispose)
 
     send: (cmd) ->
         if @online
             @socket.write cmd+"\n"
 
-    save: ->
+    save: =>
         if not @online
             console.log "[ratom] Error saving #{path.basename @tempfile} to #{@remoteAddress}"
             status-message.display "Error saving #{path.basename @tempfile} to #{@remoteAddress}", 2000
@@ -101,6 +99,11 @@ class Session
             @send "close"
             @send ""
             @socket.end()
+
+    dispose: =>
+        if @socket?
+            @close()
+        @subscriptions?.dispose()
 
 
 module.exports =
