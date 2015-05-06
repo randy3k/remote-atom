@@ -71,9 +71,11 @@ class Session
 
     handle_connection: (editor) ->
         buffer = editor.getBuffer()
-        @subscriptions = new CompositeDisposable
-        @subscriptions.add buffer.onDidSave(@save)
-        @subscriptions.add buffer.onDidDestroyed(@dispose)
+        subscriptions = new CompositeDisposable
+        subscriptions.add buffer.onDidSave(@save)
+        dispose = ->
+            subscriptions.dispose()
+        subscriptions.add buffer.onDidDestroy(dispose)
 
     send: (cmd) ->
         if @online
@@ -99,11 +101,6 @@ class Session
             @send "close"
             @send ""
             @socket.end()
-
-    dispose: =>
-        if @socket?
-            @close()
-        @subscriptions?.dispose()
 
 
 module.exports =
