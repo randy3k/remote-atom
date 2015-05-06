@@ -104,11 +104,16 @@ class Session
 
 
 module.exports =
-    configDefaults:{
-        port: 52698,
-        launch_at_startup: false,
-        keep_alive: false
-    }
+    config:
+        launch_at_startup:
+            type: 'boolean'
+            default: false
+        keep_alive:
+            type: 'boolean'
+            default: false
+        port:
+            type: 'integer'
+            default: 52698,
     online: false
 
     activate: (state) ->
