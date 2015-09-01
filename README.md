@@ -4,6 +4,9 @@ Remote Atom is a package for Atom which implements the Textmate's 'rmate'
 feature for Atom. It transfers files to be edited from remote server using SSH
 port forward and transfers the files back when they are saved.
 
+If you like it, you could send me some tips via [paypal](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=YAPVT8VB6RR9C&lc=US&item_name=tips&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted) or [gratipay](https://gratipay.com/~randy3k/).
+
+
 # Installation
 Remote Atom can be easily installed using the Atom package manager. On the
 remote server, we need to install [rmate](https://github.com/aurora/rmate) (this one is the bash version). You don't have to install it if you have been using `rmate` with TextMate or Sublime Text.
