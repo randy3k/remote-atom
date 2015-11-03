@@ -66,10 +66,11 @@ class Session
     open_in_atom: ->
         console.log "[ratom] opening #{@tempfile}"
         # register events
-        atom.workspace.open(@tempfile).then (editor) =>
+        atom.workspace.open(@tempfile, activatePane:true).then (editor) =>
             @handle_connection(editor)
 
     handle_connection: (editor) ->
+        atom.focus()
         buffer = editor.getBuffer()
         @subscriptions = new CompositeDisposable
         @subscriptions.add buffer.onDidSave(@save)
