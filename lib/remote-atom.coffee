@@ -46,6 +46,8 @@ class Session
                 @open_in_atom()
             else if @readbytes < @datasize
                 @readbytes += Buffer.byteLength(line)
+                if @readbytes > @datasize and line.slice(-1) is "\n"
+                    line = line.slice(0, -1)
                 fs.writeSync(@fd, line)
         else
             m = line.match /([a-z\-]+?)\s*:\s*(.*?)\s*$/
