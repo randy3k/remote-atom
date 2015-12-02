@@ -66,9 +66,10 @@ class Session
         socket.on "data", (chunk) =>
             @parse_chunk(chunk)
         socket.on "close", =>
-            @alive = false
-            console.log "[ratom] connection lost!"
-            status-message.display "Connection lost!", 5000
+            if @alive
+                @alive = false
+                console.log "[ratom] connection lost!"
+                status-message.display "Connection lost!", 5000
 
     parse_chunk: (chunk) ->
         if chunk
@@ -122,9 +123,8 @@ class Session
 
     close: ->
         @nconn -= 1
-        console.log @nconn
         if @alive and @nconn == 0
-            @online = false
+            @alive = false
             @send "close"
             @send ""
             @socket.end()
@@ -172,6 +172,7 @@ module.exports =
         @server.on 'listening', (e) =>
             @server_is_running = true
             console.log "[ratom] listening on port #{port}"
+
         @server.on 'error', (e) =>
             if not quiet
                 status-message.display "Unable to start server", 2000
@@ -183,6 +184,7 @@ module.exports =
 
         @server.on "close", () ->
             console.log "[ratom] stop server"
+
         @server.listen port, 'localhost'
 
     stop_server: ->
