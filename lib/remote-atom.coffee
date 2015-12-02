@@ -17,8 +17,13 @@ class FileHandler
     set: (index, value) ->
         @settings[index] = value
         if index == "display-name"
-            @remote_address = value.split(":")[0]
-            @basename = path.basename(value.split(":")[1])
+            m = value.match /(.*?):(.*)$/
+            if m and m[2]?
+                @remote_address = value.split(":")[0]
+                @basename = path.basename(value.split(":")[1])
+            else
+                @remote_address = "unknown"
+                @basename = value
         else if index == "data"
             @datasize = parseInt(value,10)
 
