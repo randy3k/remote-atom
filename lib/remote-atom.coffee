@@ -8,13 +8,12 @@ randomstring = require './randomstring'
 status-message = require './status-message'
 
 class FileHandler
-    readbytes: 0
     settings: {}
 
     constructor: (session) ->
         @session = session
 
-    make_tempfile: ()->
+    create: ->
         @tempfile = path.join(os.tmpdir(), randomstring(10), @basename)
         console.log "[ratom] create #{@tempfile}"
         dirname = path.dirname(@tempfile)
@@ -24,7 +23,7 @@ class FileHandler
     write: (str) ->
         fs.writeSync(@fd, str)
 
-    open_in_atom: ->
+    open: ->
         fs.closeSync @fd
         console.log "[ratom] opening #{@tempfile}"
         # register events
@@ -35,10 +34,12 @@ class FileHandler
         atom.focus()
         buffer = editor.getBuffer()
         @subscriptions = new CompositeDisposable
-        @subscriptions.add buffer.onDidSave(@save)
-        @subscriptions.add buffer.onDidDestroy(@close)
+        @subscriptions.add buffer.onDidSave =>
+            @save()
+        @subscriptions.add buffer.onDidDestroy =>
+            @close()
 
-    save: =>
+    save: ->
         if not @session.alive
             console.log "[ratom] Error saving #{path.basename @tempfile} to #{@remoteAddress}"
             status-message.display "Error saving #{path.basename @tempfile} to #{@remoteAddress}", 2000
@@ -51,17 +52,20 @@ class FileHandler
         @session.send "data: " + Buffer.byteLength(data)
         @session.send data
 
-    close: =>
+    close: ->
         console.log "[ratom] closing #{path.basename @tempfile}"
+        # try to close session
         @session.close()
         @subscriptions.dispose()
 
 class Session
     should_parse_data: false
+    readbytes: 0
     nconn: 0
 
     constructor: (socket) ->
         @socket = socket
+        @send "Atom "+ atom.getVersion()
         @alive = true
         socket.on "data", (chunk) =>
             @parse_chunk(chunk)
@@ -86,36 +90,37 @@ class Session
         if @should_parse_data
             @parse_data(line)
         else if line.match /open\n/
-            @fh = new FileHandler(@)
+            @file = new FileHandler(@)
+            @readbytes = 0
             @nconn += 1
         else
             @parse_setting(line)
 
     parse_data: (line) ->
-        if @fh.readbytes < @fh.datasize
-            @fh.readbytes += Buffer.byteLength(line)
+        if @readbytes < @file.datasize
+            @readbytes += Buffer.byteLength(line)
             # remove trailing newline if necessary
-            if @fh.readbytes == @fh.datasize + 1 and line.slice(-1) is "\n"
+            if @readbytes == @file.datasize + 1 and line.slice(-1) is "\n"
                 line = line.slice(0, -1)
-            @fh.write(line)
-        if @fh.readbytes >= @fh.datasize
+            @file.write(line)
+        if @readbytes >= @file.datasize
             @should_parse_data = false
-            @fh.open_in_atom()
+            @file.open()
 
     parse_setting: (line) ->
         m = line.match /([a-z\-]+?)\s*:\s*(.*?)\s*$/
         if m and m[2]?
-            @fh.settings[m[1]] = m[2]
+            @file.settings[m[1]] = m[2]
             switch m[1]
                 when "token"
-                    @fh.token = m[2]
+                    @file.token = m[2]
                 when "display-name"
-                    @fh.displayname = m[2]
-                    @fh.remoteAddress = m[2].split(":")[0]
-                    @fh.basename = path.basename(m[2].split(":")[1])
+                    @file.displayname = m[2]
+                    @file.remoteAddress = m[2].split(":")[0]
+                    @file.basename = path.basename(m[2].split(":")[1])
                 when "data"
-                    @fh.datasize = parseInt(m[2],10)
-                    @fh.make_tempfile()
+                    @file.datasize = parseInt(m[2],10)
+                    @file.create()
                     @should_parse_data = true
 
     send: (cmd) ->
@@ -166,7 +171,6 @@ module.exports =
         @server = net.createServer (socket) ->
             console.log "[ratom] received connection from #{socket.remoteAddress}"
             session = new Session(socket)
-            session.send("Atom "+atom.getVersion())
 
         port = atom.config.get "remote-atom.port"
         @server.on 'listening', (e) =>
@@ -191,4 +195,4 @@ module.exports =
         status-message.display "Stopping remote atom server", 2000
         if @server_is_running
             @server.close()
-            @online = false
+            @server_is_running = false
