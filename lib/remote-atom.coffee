@@ -8,10 +8,22 @@ randomstring = require './randomstring'
 status-message = require './status-message'
 
 class FileHandler
-    settings: {}
-
     constructor: (session) ->
         @session = session
+        @settings = {}
+        @readbytes = 0
+        @closed = false
+
+    set: (index, value) ->
+        @settings[index] = value
+        if index == "display-name"
+            @remote_address = value.split(":")[0]
+            @basename = path.basename(value.split(":")[1])
+        else if index == "data"
+            @datasize = parseInt(value,10)
+
+    get: (index) ->
+        return @settings[index]
 
     create: ->
         @tempfile = path.join(os.tmpdir(), randomstring(10), @basename)
@@ -20,11 +32,19 @@ class FileHandler
         mkdirp.sync(dirname)
         @fd = fs.openSync(@tempfile, 'w')
 
-    write: (str) ->
-        fs.writeSync(@fd, str)
+    append: (line) ->
+        if @readbytes < @datasize
+            @readbytes += Buffer.byteLength(line)
+            # remove trailing newline if necessary
+            if @readbytes == @datasize + 1 and line.slice(-1) is "\n"
+                @readbytes = @datasize
+                line = line.slice(0, -1)
+            fs.writeSync(@fd, line)
+        if @readbytes >= @datasize
+            fs.closeSync @fd
+            @closed = true
 
     open: ->
-        fs.closeSync @fd
         console.log "[ratom] opening #{@tempfile}"
         # register events
         atom.workspace.open(@tempfile, activatePane:true).then (editor) =>
@@ -41,29 +61,26 @@ class FileHandler
 
     save: ->
         if not @session.alive
-            console.log "[ratom] Error saving #{path.basename @tempfile} to #{@remoteAddress}"
-            status-message.display "Error saving #{path.basename @tempfile} to #{@remoteAddress}", 2000
+            console.log "[ratom] Error saving #{path.basename @tempfile} to #{@remote_address}"
+            status-message.display "Error saving #{path.basename @tempfile} to #{@remote_address}", 2000
             return
-        console.log "[ratom] saving #{path.basename @tempfile} to #{@remoteAddress}"
-        status-message.display "Saving #{path.basename @tempfile} to #{@remoteAddress}", 2000
+        console.log "[ratom] saving #{path.basename @tempfile} to #{@remote_address}"
+        status-message.display "Saving #{path.basename @tempfile} to #{@remote_address}", 2000
         @session.send "save"
-        @session.send "token: #{@token}"
+        @session.send "token: #{@settings['token']}"
         data = fs.readFileSync(@tempfile)
         @session.send "data: " + Buffer.byteLength(data)
         @session.send data
 
     close: ->
         console.log "[ratom] closing #{path.basename @tempfile}"
-        # try to close session
-        @session.close()
         @subscriptions.dispose()
+        @session.try_close()
 
 class Session
-    should_parse_data: false
-    readbytes: 0
-    nconn: 0
-
     constructor: (socket) ->
+        @should_parse_data = false
+        @nconn = 0
         @socket = socket
         @send "Atom "+ atom.getVersion()
         @alive = true
@@ -88,45 +105,29 @@ class Session
 
     parse_line: (line) ->
         if @should_parse_data
-            @parse_data(line)
+            @file.append(line)
+            if @file.closed
+                @should_parse_data = false
+                @file.open()
+
         else if line.match /open\n/
             @file = new FileHandler(@)
-            @readbytes = 0
             @nconn += 1
         else
             @parse_setting(line)
 
-    parse_data: (line) ->
-        if @readbytes < @file.datasize
-            @readbytes += Buffer.byteLength(line)
-            # remove trailing newline if necessary
-            if @readbytes == @file.datasize + 1 and line.slice(-1) is "\n"
-                line = line.slice(0, -1)
-            @file.write(line)
-        if @readbytes >= @file.datasize
-            @should_parse_data = false
-            @file.open()
-
     parse_setting: (line) ->
         m = line.match /([a-z\-]+?)\s*:\s*(.*?)\s*$/
         if m and m[2]?
-            @file.settings[m[1]] = m[2]
-            switch m[1]
-                when "token"
-                    @file.token = m[2]
-                when "display-name"
-                    @file.displayname = m[2]
-                    @file.remoteAddress = m[2].split(":")[0]
-                    @file.basename = path.basename(m[2].split(":")[1])
-                when "data"
-                    @file.datasize = parseInt(m[2],10)
-                    @file.create()
-                    @should_parse_data = true
+            @file.set(m[1], m[2])
+            if m[1] == "data"
+                @file.create()
+                @should_parse_data = true
 
     send: (cmd) ->
         @socket.write cmd+"\n"
 
-    close: ->
+    try_close: ->
         @nconn -= 1
         if @alive and @nconn == 0
             @alive = false
@@ -169,7 +170,7 @@ module.exports =
                 status-message.display "Starting remote atom server", 2000
 
         @server = net.createServer (socket) ->
-            console.log "[ratom] received connection from #{socket.remoteAddress}"
+            console.log "[ratom] received connection from #{socket.remote_address}"
             session = new Session(socket)
 
         port = atom.config.get "remote-atom.port"
