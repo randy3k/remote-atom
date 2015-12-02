@@ -7,18 +7,12 @@ mkdirp = require 'mkdirp'
 randomstring = require './randomstring'
 status-message = require './status-message'
 
-class Session
-    should_parse_data: false
+class FileHandler
     readbytes: 0
     settings: {}
 
-    constructor: (socket) ->
-        @socket = socket
-        @online = true
-        socket.on "data", (chunk) =>
-            @parse_chunk(chunk)
-        socket.on "close", =>
-            @online = false
+    constructor: (session) ->
+        @session = session
 
     make_tempfile: ()->
         @tempfile = path.join(os.tmpdir(), randomstring(10), @basename)
@@ -26,6 +20,55 @@ class Session
         dirname = path.dirname(@tempfile)
         mkdirp.sync(dirname)
         @fd = fs.openSync(@tempfile, 'w')
+
+    write: (str) ->
+        fs.writeSync(@fd, str)
+
+    open_in_atom: ->
+        fs.closeSync @fd
+        console.log "[ratom] opening #{@tempfile}"
+        # register events
+        atom.workspace.open(@tempfile, activatePane:true).then (editor) =>
+            @handle_connection(editor)
+
+    handle_connection: (editor) ->
+        atom.focus()
+        buffer = editor.getBuffer()
+        @subscriptions = new CompositeDisposable
+        @subscriptions.add buffer.onDidSave(@save)
+        @subscriptions.add buffer.onDidDestroy(@close)
+
+    save: =>
+        if not @session.alive
+            console.log "[ratom] Error saving #{path.basename @tempfile} to #{@remoteAddress}"
+            status-message.display "Error saving #{path.basename @tempfile} to #{@remoteAddress}", 2000
+            return
+        console.log "[ratom] saving #{path.basename @tempfile} to #{@remoteAddress}"
+        status-message.display "Saving #{path.basename @tempfile} to #{@remoteAddress}", 2000
+        @session.send "save"
+        @session.send "token: #{@token}"
+        data = fs.readFileSync(@tempfile)
+        @session.send "data: " + Buffer.byteLength(data)
+        @session.send data
+
+    close: =>
+        console.log "[ratom] closing #{path.basename @tempfile}"
+        @session.close()
+        @subscriptions.dispose()
+
+class Session
+    should_parse_data: false
+    nconn: 0
+
+    constructor: (socket) ->
+        @socket = socket
+        @alive = true
+        socket.on "data", (chunk) =>
+            @parse_chunk(chunk)
+        socket.on "close", =>
+            @alive = false
+            console.log "[ratom] connection lost!"
+            status-message.display "Connection lost!", 5000
 
     parse_chunk: (chunk) ->
         if chunk
@@ -40,70 +83,47 @@ class Session
 
     parse_line: (line) ->
         if @should_parse_data
-            if @readbytes >= @datasize and line is ".\n"
-                @should_parse_data = false
-                fs.closeSync @fd
-                @open_in_atom()
-            else if @readbytes < @datasize
-                @readbytes += Buffer.byteLength(line)
-                if @readbytes > @datasize and line.slice(-1) is "\n"
+            if @fh.readbytes < @fh.datasize
+                @fh.readbytes += Buffer.byteLength(line)
+                # remove trailing newline if necessary
+                if @fh.readbytes == @fh.datasize + 1 and line.slice(-1) is "\n"
                     line = line.slice(0, -1)
-                fs.writeSync(@fd, line)
+                @fh.write(line)
+            if @fh.readbytes >= @fh.datasize
+                @should_parse_data = false
+                @fh.open_in_atom()
+
+        else if line.match /open\n/
+            @fh = new FileHandler(@)
+            @nconn += 1
+
         else
             m = line.match /([a-z\-]+?)\s*:\s*(.*?)\s*$/
             if m and m[2]?
-                @settings[m[1]] = m[2]
+                @fh.settings[m[1]] = m[2]
                 switch m[1]
                     when "token"
-                        @token = m[2]
+                        @fh.token = m[2]
                     when "data"
-                        @datasize = parseInt(m[2],10)
+                        @fh.datasize = parseInt(m[2],10)
                         @should_parse_data = true
                     when "display-name"
-                        @displayname = m[2]
-                        @remoteAddress = @displayname.split(":")[0]
-                        @basename = path.basename(@displayname.split(":")[1])
-                        @make_tempfile()
-
-    open_in_atom: ->
-        console.log "[ratom] opening #{@tempfile}"
-        # register events
-        atom.workspace.open(@tempfile, activatePane:true).then (editor) =>
-            @handle_connection(editor)
-
-    handle_connection: (editor) ->
-        atom.focus()
-        buffer = editor.getBuffer()
-        @subscriptions = new CompositeDisposable
-        @subscriptions.add buffer.onDidSave(@save)
-        @subscriptions.add buffer.onDidDestroy(@close)
+                        @fh.displayname = m[2]
+                        @fh.remoteAddress = m[2].split(":")[0]
+                        @fh.basename = path.basename(m[2].split(":")[1])
+                        @fh.make_tempfile()
 
     send: (cmd) ->
-        if @online
-            @socket.write cmd+"\n"
+        @socket.write cmd+"\n"
 
-    save: =>
-        if not @online
-            console.log "[ratom] Error saving #{path.basename @tempfile} to #{@remoteAddress}"
-            status-message.display "Error saving #{path.basename @tempfile} to #{@remoteAddress}", 2000
-            return
-        console.log "[ratom] saving #{path.basename @tempfile} to #{@remoteAddress}"
-        status-message.display "Saving #{path.basename @tempfile} to #{@remoteAddress}", 2000
-        @send "save"
-        @send "token: #{@token}"
-        data = fs.readFileSync(@tempfile)
-        @send "data: " + Buffer.byteLength(data)
-        @socket.write data
-        @send ""
-
-    close: =>
-        console.log "[ratom] closing #{path.basename @tempfile}"
-        if @online
+    close: ->
+        @nconn -= 1
+        console.log @nconn
+        if @alive and @nconn == 0
             @online = false
             @send "close"
             @send ""
             @socket.end()
-        @subscriptions.dispose()
 
 
 module.exports =
@@ -117,23 +137,23 @@ module.exports =
         port:
             type: 'integer'
             default: 52698,
-    online: false
+    server_is_running: false
 
     activate: (state) ->
         if atom.config.get "remote-atom.launch_at_startup"
-            @startserver()
+            @start_server()
         atom.commands.add 'atom-workspace',
-            "remote-atom:start-server", => @startserver()
+            "remote-atom:start-server", => @start_server()
         atom.commands.add 'atom-workspace',
-            "remote-atom:stop-server", => @stopserver()
+            "remote-atom:stop-server", => @stop_server()
 
     deactivate: ->
-        @stopserver()
+        @stop_server()
 
-    startserver: (quiet = false) ->
+    start_server: (quiet = false) ->
         # stop any existing server
-        if @online
-            @stopserver()
+        if @server_is_running
+            @stop_server()
             status-message.display "Restarting remote atom server", 2000
         else
             if not quiet
@@ -146,7 +166,7 @@ module.exports =
 
         port = atom.config.get "remote-atom.port"
         @server.on 'listening', (e) =>
-            @online = true
+            @server_is_running = true
             console.log "[ratom] listening on port #{port}"
         @server.on 'error', (e) =>
             if not quiet
@@ -154,15 +174,15 @@ module.exports =
                 console.log "[ratom] unable to start server"
             if atom.config.get "remote-atom.keep_alive"
                 setTimeout ( =>
-                    @startserver(true)
+                    @start_server(true)
                 ), 10000
 
         @server.on "close", () ->
             console.log "[ratom] stop server"
         @server.listen port, 'localhost'
 
-    stopserver: ->
+    stop_server: ->
         status-message.display "Stopping remote atom server", 2000
-        if @online
+        if @server_is_running
             @server.close()
             @online = false
