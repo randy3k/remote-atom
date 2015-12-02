@@ -83,35 +83,39 @@ class Session
 
     parse_line: (line) ->
         if @should_parse_data
-            if @fh.readbytes < @fh.datasize
-                @fh.readbytes += Buffer.byteLength(line)
-                # remove trailing newline if necessary
-                if @fh.readbytes == @fh.datasize + 1 and line.slice(-1) is "\n"
-                    line = line.slice(0, -1)
-                @fh.write(line)
-            if @fh.readbytes >= @fh.datasize
-                @should_parse_data = false
-                @fh.open_in_atom()
-
+            @prase_data(line)
         else if line.match /open\n/
             @fh = new FileHandler(@)
             @nconn += 1
-
         else
-            m = line.match /([a-z\-]+?)\s*:\s*(.*?)\s*$/
-            if m and m[2]?
-                @fh.settings[m[1]] = m[2]
-                switch m[1]
-                    when "token"
-                        @fh.token = m[2]
-                    when "data"
-                        @fh.datasize = parseInt(m[2],10)
-                        @should_parse_data = true
-                    when "display-name"
-                        @fh.displayname = m[2]
-                        @fh.remoteAddress = m[2].split(":")[0]
-                        @fh.basename = path.basename(m[2].split(":")[1])
-                        @fh.make_tempfile()
+            @prase_setting(line)
+
+    prase_data: (line) ->
+        if @fh.readbytes < @fh.datasize
+            @fh.readbytes += Buffer.byteLength(line)
+            # remove trailing newline if necessary
+            if @fh.readbytes == @fh.datasize + 1 and line.slice(-1) is "\n"
+                line = line.slice(0, -1)
+            @fh.write(line)
+        if @fh.readbytes >= @fh.datasize
+            @should_parse_data = false
+            @fh.open_in_atom()
+
+    prase_setting: (line) ->
+        m = line.match /([a-z\-]+?)\s*:\s*(.*?)\s*$/
+        if m and m[2]?
+            @fh.settings[m[1]] = m[2]
+            switch m[1]
+                when "token"
+                    @fh.token = m[2]
+                when "display-name"
+                    @fh.displayname = m[2]
+                    @fh.remoteAddress = m[2].split(":")[0]
+                    @fh.basename = path.basename(m[2].split(":")[1])
+                when "data"
+                    @fh.datasize = parseInt(m[2],10)
+                    @fh.make_tempfile()
+                    @should_parse_data = true
 
     send: (cmd) ->
         @socket.write cmd+"\n"
