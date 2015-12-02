@@ -83,14 +83,14 @@ class Session
 
     parse_line: (line) ->
         if @should_parse_data
-            @prase_data(line)
+            @parse_data(line)
         else if line.match /open\n/
             @fh = new FileHandler(@)
             @nconn += 1
         else
-            @prase_setting(line)
+            @parse_setting(line)
 
-    prase_data: (line) ->
+    parse_data: (line) ->
         if @fh.readbytes < @fh.datasize
             @fh.readbytes += Buffer.byteLength(line)
             # remove trailing newline if necessary
@@ -101,7 +101,7 @@ class Session
             @should_parse_data = false
             @fh.open_in_atom()
 
-    prase_setting: (line) ->
+    parse_setting: (line) ->
         m = line.match /([a-z\-]+?)\s*:\s*(.*?)\s*$/
         if m and m[2]?
             @fh.settings[m[1]] = m[2]
