@@ -1,4 +1,4 @@
-{CompositeDisposable}  = require 'atom'
+{CompositeDisposable, Point}  = require 'atom'
 net = require 'net'
 fs = require 'fs'
 os = require 'os'
@@ -50,13 +50,19 @@ class FileHandler
             @closed = true
 
     open: ->
+        atom.focus()
         console.log "[ratom] opening #{@tempfile}"
         # register events
         atom.workspace.open(@tempfile, activatePane:true).then (editor) =>
             @handle_connection(editor)
 
     handle_connection: (editor) ->
-        atom.focus()
+        if row = @get("selection")
+            row = parseInt(row, 10) - 1
+            position = new Point(row, 0)
+            editor.scrollToBufferPosition(position, center: true)
+            editor.setCursorBufferPosition(position)
+
         buffer = editor.getBuffer()
         @subscriptions = new CompositeDisposable
         @subscriptions.add buffer.onDidSave =>
