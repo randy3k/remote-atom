@@ -12,7 +12,7 @@ class FileHandler
         @session = session
         @settings = {}
         @readbytes = 0
-        @closed = false
+        @ready = false
 
     set: (index, value) ->
         @settings[index] = value
@@ -47,7 +47,7 @@ class FileHandler
             fs.writeSync(@fd, line)
         if @readbytes >= @datasize
             fs.closeSync @fd
-            @closed = true
+            @ready = true
 
     open: ->
         atom.focus()
@@ -117,9 +117,10 @@ class Session
     parse_line: (line) ->
         if @should_parse_data
             @file.append(line)
-            if @file.closed
+            if @file.ready
                 @should_parse_data = false
                 @file.open()
+                @file = null
 
         else if line.match /open\n/
             @file = new FileHandler(@)
