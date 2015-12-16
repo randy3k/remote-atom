@@ -122,7 +122,7 @@ class Session
                 @file.open()
                 @file = null
 
-        else if line.match /open\n/
+        else if line.match /open\s*$/
             @file = new FileHandler(@)
             @nconn += 1
         else
