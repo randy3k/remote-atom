@@ -8,7 +8,7 @@ If you like it, you could send me some tips via [paypal](https://www.paypal.com/
 
 
 # Installation
-Remote Atom can be easily installed using the Atom package manager.
+Remote Atom can easily be installed using the Atom package manager by going to "Settings > Install" and searching for remote-atom, or by using the command line:
 
 ```
 sudo apm install remote-atom
