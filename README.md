@@ -8,8 +8,13 @@ If you like it, you could send me some tips via [paypal](https://www.paypal.com/
 
 
 # Installation
-Remote Atom can be easily installed using the Atom package manager. On the
-remote server, we need to install [rmate](https://github.com/aurora/rmate) (this one is the bash version). You don't have to install it if you have been using `rmate` with TextMate or Sublime Text.
+Remote Atom can easily be installed using the Atom package manager by going to "Settings > Install" and searching for remote-atom, or by using the command line:
+
+```
+sudo apm install remote-atom
+```
+
+On the remote server, we need to install [rmate](https://github.com/aurora/rmate) (this one is the bash version). You don't have to install it if you have been using `rmate` with TextMate or Sublime Text.
 It is the same executable for TextMate and Sublime Text. If not, it (the bash version) can be installed by running this script (assume that you have the permission),
 
 ```bash
