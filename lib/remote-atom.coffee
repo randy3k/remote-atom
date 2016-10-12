@@ -194,6 +194,7 @@ module.exports =
             if not quiet
                 status-message.display "Unable to start server", 2000
                 console.log "[ratom] unable to start server"
+                console.log "[ratom] #{e}"
             if atom.config.get "remote-atom.keep_alive"
                 setTimeout ( =>
                     @start_server(true)
