@@ -54,7 +54,7 @@ ssh -R 52698:localhost:52698 user@example.com
 After running the server, you can just open the file on the remote system by
 
 ```
-rmate test.txt
+ratom test.txt
 ```
 
 If everything has been setup correctly, your should be able to see the opening file in Atom.
