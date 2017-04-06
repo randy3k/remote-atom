@@ -54,6 +54,11 @@ ssh -R 52698:localhost:52698 user@example.com
 After running the server, you can just open the file on the remote system by
 
 ```
+rmate test.txt
+```
+... or if you renamed it to `ratom` then ...
+
+```
 ratom test.txt
 ```
 
