@@ -56,6 +56,11 @@ After running the server, you can just open the file on the remote system by
 ```
 rmate test.txt
 ```
+... or if you renamed it to `ratom` then ...
+
+```
+ratom test.txt
+```
 
 If everything has been setup correctly, your should be able to see the opening file in Atom.
 
