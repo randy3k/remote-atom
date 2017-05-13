@@ -1,5 +1,14 @@
 # remote-atom
 
+---
+
+**Maintainer wanted!**
+
+I developed `remote-atom` when I was thinking to switch from Sublime Text to Atom. However, the Atom's slow speed and [this](https://github.com/atom/atom/issues/7786) long lasting issue has stopped me from migrating to the Atom's community. Giving my disappointment to Atom, I will no longer support this Atom package. If there are any one who are interested to take charge of it, please let me know by email.
+
+---
+
+
 Remote Atom is a package for Atom which implements the Textmate's 'rmate'
 feature for Atom. It transfers files to be edited from remote server using SSH
 port forward and transfers the files back when they are saved.
