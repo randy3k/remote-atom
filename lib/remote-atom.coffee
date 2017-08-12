@@ -84,9 +84,12 @@ class FileHandler
         @session.send data
 
     close: ->
+        @session.send "close"
+        @session.send "token: #{@settings['token']}"
+        @session.send ""
         console.log "[ratom] closing #{path.basename @tempfile}"
         @subscriptions.dispose()
-        @session.try_close()
+        @session.try_end()
 
 class Session
     constructor: (socket) ->
@@ -139,12 +142,10 @@ class Session
     send: (cmd) ->
         @socket.write cmd+"\n"
 
-    try_close: ->
+    try_end: ->
         @nconn -= 1
         if @alive and @nconn == 0
             @alive = false
-            @send "close"
-            @send ""
             @socket.end()
 
 
