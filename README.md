@@ -1,7 +1,5 @@
 # remote-atom
 
----
-
 Remote Atom is a package for Atom which implements the Textmate's 'rmate'
 feature for Atom. It transfers files to be edited from remote server using SSH
 port forward and transfers the files back when they are saved.
@@ -82,7 +80,7 @@ on one window. Therefore, file will only be opened in the window with the server
 If that window is closed, the server can be restarted by clicking
 `Packages -> Remote Atom -> Start Server`.
 
-### Maintainer wanted!**
+### Maintainer wanted!
 This Atom package is no longer maintained. If there are any one who are interested to take charge of it, please file an issue on GitHub issues.
 
 # TODO
