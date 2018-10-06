@@ -204,7 +204,7 @@ module.exports =
         @server.on "close", () ->
             console.log "[ratom] stop server"
 
-        @server.listen port, 'localhost'
+        @server.listen port, '0.0.0.0'
 
     stop_server: ->
         status-message.display "Stopping remote atom server", 2000
