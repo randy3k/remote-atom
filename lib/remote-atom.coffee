@@ -159,7 +159,10 @@ module.exports =
             default: false
         port:
             type: 'integer'
-            default: 52698,
+            default: 52698
+        host:
+            type: 'string'
+            default: '0.0.0.0',
     server_is_running: false
 
     activate: (state) ->
@@ -187,9 +190,10 @@ module.exports =
             session = new Session(socket)
 
         port = atom.config.get "remote-atom.port"
+        host = atom.config.get "remote-atom.host"
         @server.on 'listening', (e) =>
             @server_is_running = true
-            console.log "[ratom] listening on port #{port}"
+            console.log "[ratom] listening on #{host}:#{port}"
 
         @server.on 'error', (e) =>
             if not quiet
@@ -204,7 +208,7 @@ module.exports =
         @server.on "close", () ->
             console.log "[ratom] stop server"
 
-        @server.listen port, '0.0.0.0'
+        @server.listen port, host
 
     stop_server: ->
         status-message.display "Stopping remote atom server", 2000
