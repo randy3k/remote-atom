@@ -162,7 +162,7 @@ module.exports =
             default: 52698
         host:
             type: 'string'
-            default: 'localhost',
+            default: '0.0.0.0',
     server_is_running: false
 
     activate: (state) ->
